@@ -1,0 +1,12 @@
+Version=0.5
+Type=PSM
+PSID=0x27
+Priority=2
+TxMode=ALT
+TxChannel=176
+Interval=
+DeliveryStart=
+DeliveryStop=
+Signature=False
+Encryption=False
+Payload=UPER HEX ENCODED DSRC MESSAGE FRAME HERE
