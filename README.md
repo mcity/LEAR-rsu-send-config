@@ -1,4 +1,4 @@
-# Lear Roadstar RSU BSM offload and BSM/PSM immediate forward
+# Lear Roadstar RSU BSM offload and BSM/PSM/SRM/SSM immediate forward
 The following configurations enable support for a LEAR Roadstar RSU to forward all received DSRC BSMs to a 3rd party server over UDP and enable immediate forwarding of UDP sent message to DSRC J2735_2016 clients.
 
 Configuration changes are made through the command line interface after SSH-ing as admin to the RSU. You'll need both the user password (SSH and viewing configurations) and the admin password (enable and request RSU commands)
@@ -9,6 +9,9 @@ For the purpose of these examples we do not use the SAE standard UDP port 1516 t
 62491 - Receive 2016 DSRC Message Frames (BSM/PSM...)
 62450 - RSU receives BSM for immediate forward here.
 62451 - RSU receives PSM for immediate forward here.
+1516 - DEFAULT
+1517 -  RSU receives SSM for immediate forward here.
+1518 - RSU receives SRM for immediate forward here.
 
 ## BSM Offload
 Configure the RSU to forward received BSMs.
@@ -80,6 +83,14 @@ View the saved configuration of the running application
 show application details
 ```
 
+### SRM Offload
+If this path is already used for another forwarding, be sure to use a new symlink to wsmpforward such as /var/wsmpforward_SRM.
+
+```sh
+config customApp update app3 /usr/local/bin/wsmpforward "2113686 10.224.50.144 62450 0 0 176 29 2"
+config customAPP enable app3
+```
+
 ### Command line debug of wsmp forward.
 The wsmp forward application provides information to standard out when run and can optionally be enabled to print a decoded wsmp/dot2 message to the command line. To enable this the user must connect to the RSU and enter a shell before running the wsmp forward command manually. On disconnect this application will cease to run.
 
@@ -133,6 +144,12 @@ Configure a firewall rule to allow traffic on UDP ports you'll send.
 ```sh
 config firewall rule allow incoming port udp 62451
 config firewall rule allow incoming port tcp 62451
+config firewall rule allow incoming port tcp 1516
+config firewall rule allow incoming port tcp 1517
+config firewall rule allow incoming port tcp 1518
+config firewall rule allow incoming port udp 1516
+config firewall rule allow incoming port udp 1517
+config firewall rule allow incoming port udp 1518
 ```
 The documentation states to open the TCP port, but it shouldn't be necessary as the packet is flowing over UDP only inbound and the immediate forward app only appears to listen on UDP.
 
@@ -145,7 +162,9 @@ If you'd like to receive and forward two types of messages, create a symbolic li
 
 Example (from system request shell)
 ```sh
-ln -s /usr/local/bin/immediateForwardMsg /var/ifmBSM
+ln -s /usr/local/bin/immediateForwardMsg /var/immediateForwardMsg_BSM
+ln -s /usr/local/bin/immediateForwardMsg /var/immediateForwardMsg_PSM
+ln -s /usr/local/bin/immediateForwardMsg /var/immediateForwardMsg_SSM
 ```
 
 ### PSM Configuration Files
@@ -191,6 +210,71 @@ Place the following files for PSM forwarding.
 * ifm_obsm.conf -> var/IFM/ (644 admin:admin)
 * obsm.conf -> /var/ (644 admin:admin)
 * obsmOpt.conf -> /var/ (644 admin:admin)
+
+It's important that the naming scheme here matches. The /var file is picked based on the names from the appname from the /var/ conf files.
+
+SSH to RSU (10.X.x.x)
+```sh
+ssh admin@10.X.x.x
+```
+
+Enter request mode
+```sh
+request
+```
+Enter admin password
+
+Request a shell
+```sh
+request system shell
+```
+
+Either use vi or scp to get the files to the system and ensure their permissions are correct.
+
+
+### SSM Configuration Files
+3 Files need to be placed in the right locations on the RSU. 
+The filename format is:
+* ifm_appname.conf -> /var/IFM/
+* appname.conf -> /var/
+* appnameOpt.conf -> /var/
+
+Place the following files for PSM forwarding.
+* ifm_ossm.conf -> var/IFM/ (644 admin:admin)
+* ossm.conf -> /var/ (644 admin:admin)
+* ossmOpt.conf -> /var/ (644 admin:admin)
+
+It's important that the naming scheme here matches. The /var file is picked based on the names from the appname from the /var/ conf files.
+
+SSH to RSU (10.X.x.x)
+```sh
+ssh admin@10.X.x.x
+```
+
+Enter request mode
+```sh
+request
+```
+Enter admin password
+
+Request a shell
+```sh
+request system shell
+```
+
+Either use vi or scp to get the files to the system and ensure their permissions are correct.
+
+### SRM Configuration Files
+3 Files need to be placed in the right locations on the RSU. 
+The filename format is:
+* ifm_appname.conf -> /var/IFM/
+* appname.conf -> /var/
+* appnameOpt.conf -> /var/
+
+Place the following files for PSM forwarding.
+* ifm_osrm.conf -> var/IFM/ (644 admin:admin)
+* osrm.conf -> /var/ (644 admin:admin)
+* osrmOpt.conf -> /var/ (644 admin:admin)
 
 It's important that the naming scheme here matches. The /var file is picked based on the names from the appname from the /var/ conf files.
 
